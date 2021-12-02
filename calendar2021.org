@@ -1,8 +1,8 @@
 * Advent of Code 2021
 ** day 1
 #+NAME: day1-input
-#+BEGIN_SRC emacs-lisp :session day1
-(setq advent/day1input '(119 121 129 128 130 134 138 143 113 114
+#+BEGIN_SRC emacs-lisp :session "day1"
+(defconst advent/day1input '(119 121 129 128 130 134 138 143 113 114
       129 103 90 98 91 96 101 90 73 66 74 82 80 91 92 93 96 101
       102 115 122 114 119 120 108 104 109 135 123 133 134 133 138
       144 151 158 159 162 166 146 137 124 153 150 153 162 169 167
@@ -165,11 +165,11 @@
       6196 6195 6192 6195 6197 6196 6197 6199 6200 6198 6214 6216
       6217 6218 6217 6236 6239 6209 6214 6208 6210 6212 6217))
 
-(setq advent/day1test '(199 200 208 210 200 207 240 269 260 263))
+(defconst advent/day1test '(199 200 208 210 200 207 240 269 260 263))
 #+END_SRC
 
 #+NAME: day1-solution
-#+BEGIN_SRC emacs-lisp :session day1
+#+BEGIN_SRC emacs-lisp :session "day1"
 (setq advent/day1result ())
 
 (defun advent/find-ascending (list)
@@ -217,8 +217,8 @@ advent/day1result
 
 ** day 2
 #+NAME: day2-input
-#+BEGIN_SRC emacs-lisp :session day2
-(setq advent/day2-input '("forward" 2 "down" 9 "up" 6 "forward" 1 "down" 5
+#+BEGIN_SRC emacs-lisp :session "day2"
+(defconst advent/day2-input '("forward" 2 "down" 9 "up" 6 "forward" 1 "down" 5
 "down" 7 "down" 9 "forward" 9 "down" 8 "up" 7 "forward" 2 "up" 6 "forward" 4 "down"
 5 "down" 9 "up" 1 "down" 9 "forward" 8 "forward" 6 "forward" 6 "forward" 5
 "forward" 9 "up" 3 "up" 5 "forward" 1 "down" 4 "down" 7 "forward" 2 "up" 3 "down" 8
@@ -343,21 +343,18 @@ advent/day1result
 "down" 9 "down" 6 "down" 9 "down" 2 "down" 9 "down" 7 "down" 5 "forward" 4 "up" 5
 "up" 7 "forward" 2 "forward" 7 "down" 3 "down" 3 "forward" 4))
 
-(setq advent/day2-test '("forward" 5 "down" 5 "forward" 8 "up"
+(defconst advent/day2-test '("forward" 5 "down" 5 "forward" 8 "up"
 3 "down" 8 "forward" 2))
 #+END_SRC
 
-#+RESULTS: day2-input
-| forward | 5 | down | 5 | forward | 8 | up | 3 | down | 8 | forward | 2 |
-
 #+NAME: day2-solution
-#+BEGIN_SRC emacs-lisp
-(setq advent/day2result ())
-
+#+BEGIN_SRC emacs-lisp :session "day2"
 (defun advent/find-position (list)
   "Find submarine position with instructions from LIST."
   (let ((position 0)
-        (depth 0))
+        (depth 0)
+        instruction
+        value)
     (while list
       (setq instruction (pop list))
       (setq value (pop list))
@@ -373,9 +370,6 @@ advent/day1result
     (* position depth)))
 
 (advent/find-position advent/day2-test) ;; -> 150 OK
-
-(setq advent/day2result (cons (advent/find-position advent/day2-input)
-                              advent/day2result))
 
 (defun advent/find-position-aim (list)
   "Find submarine position with instructions from LIST.
@@ -400,10 +394,8 @@ Now it takes into account the aim of the submarine."
 
 (advent/find-position-aim advent/day2-test) ;; -> 900 OK
 
-(setq advent/day2result (cons (advent/find-position-aim advent/day2-input)
-                              advent/day2result))
-
-(reverse advent/day2result)
+(list (advent/find-position advent/day2-input)
+      (advent/find-position-aim advent/day2-input))
 #+END_SRC
 
 #+RESULTS: day2-solution
