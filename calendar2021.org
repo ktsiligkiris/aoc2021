@@ -1427,6 +1427,41 @@ Now it takes into account the aim of the submarine."
                     (setq bingo (advent/compute-bingo draw board))))))))
       bingo))
 
+  (defun advent/play-last-bingo (numbers inboards)
+    "Play bingo with NUMBERS and INBOARDS, in advent of code."
+    (let* ((number (advent/bingo-numbers numbers))
+           (boards (mapcar #'copy-sequence inboards))
+           (hit nil)
+           (bingo nil)
+           draw)
+      (while (> (length boards) 1)
+        (setq draw (iter-next number))
+        (dolist (board boards)
+          (setq hit (seq-position board draw))
+          (if hit
+              (progn
+                (aset board hit (+ 100 (aref board hit)))))
+          )
+        (dolist (board boards)
+          (setq hit (seq-position board (+ draw 100)))
+          (if hit
+              (progn
+                (block checkrow
+                  (let ((start (* 5 (/ hit 5))))
+                    (dotimes (i 5)
+                      (if (< (aref board (+ start i)) 100)
+                          (return-from checkrow)))
+                    (delete board boards)))
+                (block checkcolumn
+                  (let ((start (mod hit 5)))
+                    (dotimes (i 5)
+                      (if (< (aref board (+ start (* i 5))) 100)
+                          (return-from checkcolumn)))
+                    (delete board boards)))))))
+      (print draw (get-buffer "output"))
+      (print boards (get-buffer "output"))
+      (advent/play-bingo advent/day4-input-random boards)))
+
   (defun advent/compute-bingo (draw board)
     "Compute the bingo score of BOARD with the last DRAW."
     (* draw
@@ -1435,9 +1470,9 @@ Now it takes into account the aim of the submarine."
         (seq-filter (lambda (element) (< element 100)) board)
         0)))
 
-  (advent/play-bingo advent/day4-input-random advent/day4-input-boards)
+  (advent/play-last-bingo advent/day4-input-random advent/day4-input-boards)
   ;;; advent/day4 ends here
 #+END_SRC
 
 #+RESULTS: day4-solution
-: 10680
+: 11088
