@@ -2106,18 +2106,42 @@ Now it takes into account the aim of the submarine."
 #+NAME: day6-solution
 #+BEGIN_SRC emacs-lisp :session day6
   (defun advent/breed-lanternfish (school days)
+  "Find how many lanternfish will be in the SCHOOL after DAYS days.
+  This works for small numbers, since memory consumption grows
+  exponentially with this, so for bigger DAYS, a different
+  algorithm is needed."
     (dotimes (iter days)
       (let ((spawns 0))
-        (setq school (mapcar #'1- school))
-        (if (> (setq spawns (length (seq-filter (lambda (x) (= x -1)) school))) 0)
-            (progn
-              (setq school (mapcar (lambda (x) (if (= x -1) 6 x)) school))
-              (dotimes (i spawns)
-                (setq school (cons 8 school)))))))
+        (setq school
+              (mapcar
+               (lambda (x)
+                 (if (>= (1- x) 0)
+                     (1- x)
+                   (progn
+                     (setq spawns (1+ spawns))
+                     6)))
+               school))
+        (if (> spawns 0)
+            (setq school (append (make-list spawns 8) school)
+                  spawns 0))))
     (length school))
 
-  (advent/breed-lanternfish advent/day6-input 80)
+  (defun advent/breed-lanternfish-long (school days)
+    (let ((schools '(0 0)))
+      (dotimes (index 7)
+        (setq schools
+              (append
+               (list (length (seq-filter (lambda (x) (= x (- 6 index))) school)))
+               schools)))
+      (dotimes (index days)
+        (let (spawn)
+          (setq spawn (pop schools))
+          (setq schools (append schools (list spawn)))
+          (setf (nth 6 schools) (+ spawn (nth 6 schools)))))
+      (cl-reduce #'+ schools)))
+
+  (advent/breed-lanternfish-long advent/day6-input 256)
 #+END_SRC
 
 #+RESULTS: day6-solution
-: 350149
+: 1590327954513
