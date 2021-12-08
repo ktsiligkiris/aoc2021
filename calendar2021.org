@@ -2083,3 +2083,41 @@ Now it takes into account the aim of the submarine."
 
 #+RESULTS: day5-solution
 : 19939
+** day 6
+#+NAME: day6-input
+#+BEGIN_SRC emacs-lisp :session day6
+  (defconst advent/day6-test '(3 4 3 1 2))
+
+  (defconst advent/day6-input '(4 1 4 1 3 3 1 4 3 3 2 1 1 3 5 1 3 5
+  2 5 1 5 5 1 3 2 5 3 1 3 4 2 3 2 3 3 2 1 5 4 1 1 1 2 1 4 4 4 2 1 2
+  1 5 1 5 1 2 1 4 4 5 3 3 4 1 4 4 2 1 4 4 3 5 2 5 4 1 5 1 1 1 4 5 3
+  4 3 4 2 2 2 2 4 5 3 5 2 4 2 3 4 1 4 4 1 4 5 3 4 2 2 2 4 3 3 3 3 4
+  2 1 2 5 5 3 2 3 5 5 5 4 4 5 5 4 3 4 1 5 1 3 4 4 1 3 1 3 1 1 2 4 5
+  3 1 2 4 3 3 5 4 4 5 4 1 3 1 1 4 4 4 4 3 4 3 1 4 5 1 2 4 3 5 1 1 2
+  1 1 5 4 2 1 5 4 5 2 4 4 1 5 2 2 5 3 3 2 3 1 5 5 5 4 3 1 1 5 1 4 5
+  2 1 3 1 2 4 4 1 1 2 5 3 1 5 2 4 5 1 2 3 1 2 2 1 2 2 1 4 1 3 4 2 1
+  1 5 4 1 5 4 4 3 1 3 3 1 1 3 3 4 2 3 4 2 3 1 4 1 5 3 1 1 5 3 2 3 5
+  1 3 1 1 3 5 1 5 1 1 3 1 1 1 1 3 3 1))
+#+END_SRC
+
+#+RESULTS: day6-input
+: advent/day6-input
+
+#+NAME: day6-solution
+#+BEGIN_SRC emacs-lisp :session day6
+  (defun advent/breed-lanternfish (school days)
+    (dotimes (iter days)
+      (let ((spawns 0))
+        (setq school (mapcar #'1- school))
+        (if (> (setq spawns (length (seq-filter (lambda (x) (= x -1)) school))) 0)
+            (progn
+              (setq school (mapcar (lambda (x) (if (= x -1) 6 x)) school))
+              (dotimes (i spawns)
+                (setq school (cons 8 school)))))))
+    (length school))
+
+  (advent/breed-lanternfish advent/day6-input 80)
+#+END_SRC
+
+#+RESULTS: day6-solution
+: 350149
