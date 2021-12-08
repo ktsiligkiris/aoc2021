@@ -1998,4 +1998,88 @@ Now it takes into account the aim of the submarine."
 
 #+NAME: day5-solution
 #+BEGIN_SRC emacs-lisp :session day5
+  (defun advent/find-overlaps-hv (coordinates dimension)
+    "Find the overlapping points of horizontal and vertical lines.
+  Given the COORDINATES find horizontal or vertical lines that
+  intersect in a table of maximum DIMENSION x DIMENSION dimension."
+    (setq field (make-vector dimension nil))
+    (dotimes (i dimension)
+      (setf (aref field i) (make-vector dimension 0)))
+    (dolist (coordinate coordinates)
+      (let* ((points (split-string coordinate " -> "))
+             (start (split-string (car points) ","))
+             (x1 (string-to-number (car start)))
+             (y1 (string-to-number (cadr start)))
+             (end (split-string (cadr points) ","))
+             (x2 (string-to-number (car end)))
+             (y2 (string-to-number (cadr end))))
+        (if (= y1 y2)
+            (let ((begin (min x1 x2))
+                  (finish (max x1 x2)))
+              (while (<= begin finish)
+                (aset (aref field y1) begin (1+ (aref (aref field y1) begin)))
+                (setq begin (1+ begin)))))
+        (if (= x1 x2)
+            (let ((top (min y1 y2))
+                  (bottom (max y1 y2)))
+              (while (<= top bottom)
+                (aset (aref field top) x1 (1+ (aref (aref field top) x1)))
+                (setq top (1+ top)))))))
+    (let ((summ 0))
+      (dotimes (i dimension)
+        (setq summ (+ summ
+                      (length
+                       (seq-filter (lambda (elem) (> elem 1))
+                                   (aref field i))))))
+      summ))
+
+  (defun advent/find-overlaps-hvd (coordinates dimension)
+    "Find the overlapping points of horizontal, vertical and diagonal lines.
+  Given the COORDINATES find horizontal, vertical or diagonal lines
+  that intersect in a table of maximum DIMENSION x DIMENSION,
+  dimension."
+    (setq field (make-vector dimension nil))
+    (dotimes (i dimension)
+      (setf (aref field i) (make-vector dimension 0)))
+    (dolist (coordinate coordinates)
+      (let* ((points (split-string coordinate " -> "))
+             (start (split-string (car points) ","))
+             (x1 (string-to-number (car start)))
+             (y1 (string-to-number (cadr start)))
+             (end (split-string (cadr points) ","))
+             (x2 (string-to-number (car end)))
+             (y2 (string-to-number (cadr end))))
+        (cond
+         ((= y1 y2)
+          (let ((begin (min x1 x2))
+                (finish (max x1 x2)))
+            (while (<= begin finish)
+              (aset (aref field y1) begin (1+ (aref (aref field y1) begin)))
+              (setq begin (1+ begin)))))
+         ((= x1 x2)
+          (let ((top (min y1 y2))
+                (bottom (max y1 y2)))
+            (while (<= top bottom)
+              (aset (aref field top) x1 (1+ (aref (aref field top) x1)))
+              (setq top (1+ top)))))
+         (t
+          (let ((dist (abs (- x2 x1)))
+                (dirx (signum (- x2 x1)))
+                (diry (signum (- y2 y1))))
+            (dotimes (i (1+ dist))
+              (aset (aref field y1) x1 (1+ (aref (aref field y1) x1)))
+              (setq x1 (+ x1 dirx))
+              (setq y1 (+ y1 diry))))))))
+    (let ((summ 0))
+      (dotimes (i dimension)
+        (setq summ (+ summ
+                      (length
+                       (seq-filter (lambda (elem) (> elem 1))
+                                   (aref field i))))))
+      summ))
+
+  (advent/find-overlaps-hvd advent/day5-input 1000)
 #+END_SRC
+
+#+RESULTS: day5-solution
+: 19939
