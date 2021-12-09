@@ -2232,8 +2232,30 @@ Now it takes into account the aim of the submarine."
             (setq min-pos current-pos)))
       min-pos))
 
-  (advent/minimize-fuel-cost advent/day7-input)
+  (defun advent/minimize-fuel-cost-augmented (positions)
+    "Compute the least fuel consumption for given POSITIONS.
+  But this time the fuel consumption increases with an arithmetic progressions."
+    (let ((greatest (seq-max positions))
+          (current-pos 0)
+          (min-pos 0))
+      (setq min-pos (seq-reduce
+                     (lambda (init x)
+                       (let ((dist (abs (- x 0))))
+                         (+ init (/ (* dist (1+ dist)) 2))))
+                     positions 0))
+      (dotimes (i (1- greatest))
+        (setq current-pos (seq-reduce
+                           (lambda (init x)
+                             (let ((dist (abs (- x i))))
+                               (+ init
+                                  (/ (* dist (1+ dist)) 2))))
+                           positions 0))
+        (if (< current-pos min-pos)
+            (setq min-pos current-pos)))
+      min-pos))
+
+  (advent/minimize-fuel-cost-augmented advent/day7-input)
 #+END_SRC
 
 #+RESULTS: day7-solution
-: 341558
+: 93214037
