@@ -2696,4 +2696,32 @@ Now it takes into account the aim of the submarine."
 
 #+NAME: day9-solution
 #+BEGIN_SRC emacs-lisp :session day9
+  (defun advent/day9-sum-minimums (field)
+    "Search the FIELD for minimums and return their sum (+1)."
+    (let ((summ 0)
+          (rows (length field))
+          (columns (length (aref field 0))))
+      (dotimes (i rows)
+        (dotimes (j columns)
+          (let ((value (aref (aref field i) j))
+                (top (if (> i 0) (aref (aref field (1- i)) j) 10))
+                (bottom (if (< i (1- rows)) (aref (aref field (1+ i)) j) 10))
+                (left (if (> j 0) (aref (aref field i) (1- j)) 10))
+                (right (if (< j (1- columns)) (aref (aref field i) (1+ j)) 10)))
+            (if (and
+                 (< value top)
+                 (< value right)
+                 (< value bottom)
+                 (< value left))
+                (setq summ (+ summ value 1)))
+            )
+          )
+        )
+      summ)
+    )
+
+  (advent/day9-sum-minimums advent/day9-input)
 #+END_SRC
+
+#+RESULTS: day9-solution
+: 562
