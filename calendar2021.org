@@ -2720,8 +2720,59 @@ Now it takes into account the aim of the submarine."
       summ)
     )
 
-  (advent/day9-sum-minimums advent/day9-input)
+  (defun advent/day9-find-basins (field)
+    "Search the FIELD for minimums and return their sum (+1)."
+    (let ((basins ())
+          (returnlist ())
+          (rows (length field))
+          (columns (length (aref field 0))))
+      (dotimes (i rows)
+        (dotimes (j columns)
+          (let ((value (aref (aref field i) j))
+                (top (if (> i 0) (aref (aref field (1- i)) j) 10))
+                (bottom (if (< i (1- rows)) (aref (aref field (1+ i)) j) 10))
+                (left (if (> j 0) (aref (aref field i) (1- j)) 10))
+                (right (if (< j (1- columns)) (aref (aref field i) (1+ j)) 10)))
+            (if (and
+                 (< value top)
+                 (< value right)
+                 (< value bottom)
+                 (< value left))
+                (progn
+                  (setq returnlist (advent/day9-sum-basin field i j))
+                  (setq basins (cons (car returnlist) basins))
+                  (setq field (cadr returnlist)))))))
+      (setq basins (sort basins '>))
+      (* (car basins) (cadr basins) (caddr basins))))
+
+  (defun advent/day9-sum-basin (field row column)
+    (cond
+     ((or (< row 0)
+          (< column 0)
+          (>= row (length field))
+          (>= column (length (aref field 0))))
+      (list 0 field))
+     ((>= (aref (aref field row) column) 9)
+      (list 0 field))
+     (t (let (returnvalue (summ 0))
+          (setq summ (1+ summ))
+          (aset (aref field row) column 10)
+          (setq returnvalue (advent/day9-sum-basin field (1- row) column))
+          (setq summ (+ summ (car returnvalue)))
+          (setq field (cadr returnvalue))
+          (setq returnvalue (advent/day9-sum-basin field row (1- column)))
+          (setq summ (+ summ (car returnvalue)))
+          (setq field (cadr returnvalue))
+          (setq returnvalue (advent/day9-sum-basin field (1+ row) column))
+          (setq summ (+ summ (car returnvalue)))
+          (setq field (cadr returnvalue))
+          (setq returnvalue (advent/day9-sum-basin field row (1+ column)))
+          (setq summ (+ summ (car returnvalue)))
+          (setq field (cadr returnvalue))
+          (list summ field)))))
+
+  (advent/day9-find-basins advent/day9-input)
 #+END_SRC
 
 #+RESULTS: day9-solution
-: 562
+: 1076922
