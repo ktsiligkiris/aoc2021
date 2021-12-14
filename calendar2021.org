@@ -3044,6 +3044,58 @@ Now it takes into account the aim of the submarine."
           (setf (aref octapi line) (cl-map 'vector (lambda (elem) (if (> elem 9) 0 elem)) (aref octapi line)))))
       result))
 
+  (defun advent/day11-find-all-flash (octapi)
+    "Count the steps needed for all OCTAPI to flash together.
+  The energy of the octapi is raised by one and any octapi that
+    reach 10 are flashing and raising the energy of the octapi
+    around them by 1.  At the end the energy of the octapi that
+    have flashed is moved to 0 and the cycle begins.  All this for
+    100 cycles."
+    (let (flashes (result 0) (step 0))
+      (while (not (= result 100))
+        (cl-incf step)
+        (setq result 0)
+        ;; add one to all octapi
+        (dotimes (line 10)
+          (setf (aref octapi line) (cl-map 'vector #'1+ (aref octapi line))))
+        (let ((flashing 11))
+          (while (> (setq flashes (seq-reduce
+                                   #'+
+                                   (mapcar
+                                    (lambda (x)
+                                      (- x 9))
+                                    (apply 'cl-concatenate 'list
+                                           (mapcar
+                                            (lambda (row)
+                                              (seq-filter
+                                               (lambda (elem)
+                                                       (= elem 10))
+                                               row))
+                                            octapi)))
+                                   0))
+                    0)
+            (setq result (+ result flashes)) ;; store the flashes after increment
+            (dotimes (row 10) ;; set all flashes to flashing value
+              (setf (aref octapi row) (cl-map 'vector (lambda (elem) (if (= elem 10) flashing elem)) (aref octapi row))))
+            (dotimes (row 10)
+              (dotimes (column 10)
+                (if (= (aref (aref octapi row) column) flashing)
+                    (progn
+                      (advent/day11-flash-around octapi row (1- column))
+                      (advent/day11-flash-around octapi (1- row) (1- column))
+                      (advent/day11-flash-around octapi (1- row) column)
+                      (advent/day11-flash-around octapi (1- row) (1+ column))
+                      (advent/day11-flash-around octapi row (1+ column))
+                      (advent/day11-flash-around octapi (1+ row) (1+ column))
+                      (advent/day11-flash-around octapi (1+ row) column)
+                      (advent/day11-flash-around octapi (1+ row) (1- column))
+                      ))))
+            (setq flashing (1+ flashing));; increment flashing for this session
+            )) ;; Here I have collected all possible flashes.
+        (dotimes (line 10) ;; Zero all flashed octapi.
+          (setf (aref octapi line) (cl-map 'vector (lambda (elem) (if (> elem 9) 0 elem)) (aref octapi line)))))
+      step))
+
   (defun advent/day11-flash-around (field row col)
     (cond
      ((or (< row 0)
@@ -3053,8 +3105,8 @@ Now it takes into account the aim of the submarine."
           (> (aref (aref field row) col) 9)) nil)
      (t (setf (aref (aref field row) col) (1+ (aref (aref field row) col))))))
 
-  (advent/day11-count-flashes advent/day11-input)
+  (advent/day11-find-all-flash advent/day11-input)
 #+END_SRC
 
 #+RESULTS: day11-solution
-: 1741
+: 440
