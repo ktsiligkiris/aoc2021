@@ -12121,8 +12121,14 @@ hash #) or else it draws a point (.)."
                             ((79 60 97)    (* old old) 13 1 3 0)
                             ((74)          (+ old 3)   17 0 1 0)))
 
-(defconst aoc22/day11input '("TBD"))
-
+(defconst aoc22/day11input '(((98 97 98 55 56 72)       (* old 13)  11 4 7 0)
+                             ((73 99 55 54 88 50 55)    (+ old 4)   17 2 6 0)
+                             ((67 98)                   (* old 11)   5 6 5 0)
+                             ((82 91 92 53 99)          (+ old 8)   13 1 2 0)
+                             ((52 62 94 96 52 87 53 60) (* old old) 19 3 1 0)
+                             ((94 80 84 79)             (+ old 5)    2 7 0 0)
+                             ((89)                      (+ old 1)    3 0 5 0)
+                             ((70 59 63)                (+ old 3)    7 4 3 0)))
 #+END_SRC
 
 #+RESULTS: 2022-day11-input
@@ -12156,13 +12162,45 @@ To be replaced with actual docstring."
                     (append (car (nth monkeyn monkeys)) (list item))))
             )
           (setf (car (nth monkey monkeys)) '()))))
-    monkeys))
-
+    (let (results)
+      (dolist (monkey monkeys)
+        (push (nth 5 monkey) results))
+      (sort results #'>)
+      (* (car results) (cadr results)))))
 
 (defun aoc22/day11-part2 (input)
   "Takes INPUT and solve the puzzle.
 To be replaced with actual docstring."
-  (car input))
+  (let ((monkeys (mapcar #'copy-sequence input))
+        (uberdiv 1))
+    (dolist (monkey monkeys)
+      (setq uberdiv (* uberdiv (nth 2 monkey))))
+    (dotimes (rounds 10000)
+      (dotimes (monkey (length monkeys))
+        (let ((func (cadr (nth monkey monkeys)))
+              (divisor (nth 2 (nth monkey monkeys)))
+              (monkeyt (nth 3 (nth monkey monkeys)))
+              (monkeyn (nth 4 (nth monkey monkeys)))
+              (business (nth 5 (nth monkey monkeys)))
+              (old nil))
+          (setf (nth 5 (nth monkey monkeys))
+                (+ business (length (car (nth monkey monkeys)))))
+          (dolist (item (car (nth monkey monkeys)))
+            (setq old item)
+            (setq item (mod (eval func) uberdiv))
+            (if (= (mod item divisor) 0)
+                (setf (car (nth monkeyt monkeys))
+                      (append (car (nth monkeyt monkeys)) (list item)))
+              (setf (car (nth monkeyn monkeys))
+                    (append (car (nth monkeyn monkeys)) (list item))))
+            )
+          (setf (car (nth monkey monkeys)) '()))))
+    (let (results)
+      (dolist (monkey monkeys)
+        (push (nth 5 monkey) results))
+      (sort results #'>)
+      (* (car results) (cadr results)))
+    ))
 
 ;;; Helper functions:
 
@@ -12171,8 +12209,144 @@ To be replaced with actual docstring."
 (vector (aoc22/day11-part1 aoc22/day11test)
         (aoc22/day11-part1 aoc22/day11input)
         (aoc22/day11-part2 aoc22/day11test)
-        (aoc22/day11-part2 aoc22/day11input))
+        (aoc22/day11-part2 aoc22/day11input)
+        )
 #+END_SRC
 
 #+RESULTS: 2022-day11-solution
-: ["TBD" "TBD" "TBD" "TBD"]
+: [10605 54036 2487781790 13237873355]
+** day 12
+#+NAME: 2022-day12-input
+#+BEGIN_SRC emacs-lisp :session "day12"
+(defconst aoc22/day12test "Sabqponm
+abcryxxl
+accszExk
+acctuvwj
+abdefghi")
+
+(defconst aoc22/day12input "abcccccccccaaaaaaaaaaccccccccccccaaaaaaaaccaaccccccccccccccccccccccccccccccccccccccccccccaaaaaa
+abccccccccccaaaaaaaaaccccccccccccaaaaaaaaaaaacccccccccccaacccacccccccccccccccccccccccccccaaaaaa
+abcccccccccccaaaaaaacccccccccccccaaaaaaaaaaaaaacccccccccaaacaacccccccccaaaccccccccccccccccaaaaa
+abccccccccccaaaaaaccccccccccccccaaaaaaaaaaaaaaaccccccccccaaaaaccccccccccaaacccccccccccccccccaaa
+abccccccccccaaaaaaaccccccccccccaaaaaaaaaaaaaacccccccccccaaaaaacccccccccaaaacccccccccccccccccaac
+abaaccaaccccaaccaaaccccccccaaaaaaaaaaaaaaacaaccccccccccaaaaaaaacccccccccaaalcccccccccccccccaaac
+abaaaaaacccccccccaaccccccccaaaaaacccaaaacccaaccccccccccaaaaaaaaccccccccalllllllcccccccccccccccc
+abaaaaaacccccccaaacccccccccaaaaccccccaaaccccaaaaacccccccccaacccccccaaaakllllllllcccccccaacccccc
+abaaaaaacccccccaaaacccccccccaacccccccaaaccccaaaaacccccccccaacccccccaakkklllpllllccccacaaacccccc
+abaaaaaaaccccccaaaaccccaaccccccccccccccccccaaaaaaccccccccccccccccccckkkkpppppplllcccaaaaaaacccc
+abaaaaaaacaaaccaaaaccaaaaaaccccccccccccccccaaaaaacccccccaaaccccckkkkkkkpppppppplllcddaaaaaacccc
+abcaaaacccaacccccccccaaaaaacccccaaaccccccccaaaaaacccccccaaaaccjkkkkkkkpppppuppplmmdddddaaaccccc
+abccaaaaaaaaaccccccccaaaaaaccccaaaaaacccccccaaacccccccccaaaajjjkkkkkrpppuuuuupppmmmdddddacccccc
+abccccaaaaaaaacccccccaaaaacccccaaaaaacccccccccccccccccccaaacjjjjrrrrrrppuuuuupqqmmmmmddddaccccc
+abccccaaaaaaaaacccccccaaaacccccaaaaaaccccccccccccccccccccccjjjrrrrrrrrpuuuxuvvqqqmmmmmddddccccc
+abccccaaaaaaaaacccccccccccccccccaaaaaccccaacccaccccccccaaccjjjrrrruuuuuuuxxyvvqqqqqmmmmmdddcccc
+abccccaaaaaaaacccccccccaaaccccccaacaaccccaaacaacccaaacaaaccjjjrrrtuuuuuuuxxyvvvqqqqqmmmmdddcccc
+abccaaaaaaaacccccccccccaaaaaccccccccccccccaaaaacccaaaaaaaccjjjrrttttxxxxxxyyvvvvvqqqqmmmmdeeccc
+abccaaaccaaaccccccccaacaaaaacccccccccccccaaaaaacccaaaaaacccjjjrrtttxxxxxxxyyvvvvvvvqqqmmmeeeccc
+abaaaaaaaaaacccaaaccaaaaaaaaaaaccaaaccccaaaaaaaacccaaaaaaaajjjqqrttxxxxxxxyyyyyyvvvqqqnnneeeccc
+SbaaaaaaaaccccaaaaccaaaaaaaaaaaaaaaaacccaaaaaaaaccaaaaaaaaacjjjqqtttxxxxEzzyyyyvvvvqqqnnneeeccc
+abcaaaaaacccccaaaaccccaaaaaaaccaaaaaaccccccaaccccaaaaaaaaaaciiiqqqtttxxxyyyyyyvvvvrrrnnneeecccc
+abcaaaaaacccccaaaacccaaaaaaaaccaaaaaaccccccaaccccaaacaaacccciiiqqqqttxxyyyyyywvvvrrrnnneeeecccc
+abcaaaaaaccccccccccccaaaaaaaaacaaaaacccccccccccccccccaaaccccciiiqqtttxxyyyyyywwrrrrnnnneeeccccc
+abcaaacaacccccaacccccaaaaaaaaacaaaaacccccccccccccccccaaaccccciiiqqttxxxywwyyywwrrrnnnneeecccccc
+abccccccccaaacaaccccccccccacccccccccccccccccccccccccccccccccciiqqqttxxwwwwwwywwrrrnnneeeccccccc
+abccaacccccaaaaaccccccccccccccccccccccccccccccccccccccccaacaaiiqqqttwwwwsswwwwwrrrnnfffeccccccc
+abaaaaccccccaaaaaacccccccccccccccccccccccccccccaaaccccccaaaaaiiqqqttssssssswwwwrrronfffaccccccc
+abaaaaaacccaaaaaaacccccccccccccccccccccccccccaaaaaacccccaaaaaiiqqqssssssssssswrrrooofffaaaacccc
+abaaaaaaccaaaaaacccccccccccccccccccccccccccccaaaaaacccccaaaaaiiqqqppssspppssssrrrooofffaaaacccc
+abaaaaaaccaacaaacccccccccccccccccccccccccccccaaaaaacccccaaaaaiihpppppppppppossrrooofffaaaaacccc
+abaaaaccccccccaacccccccccccccccccccccccccccccaaaaaccccccccaaahhhhppppppppppoooooooofffaaaaccccc
+abaaaaccccccccccaacccccccccccccccccaaacccccccaaaaacccccccccccchhhhhhhhhhggpoooooooffffaaaaccccc
+abccaacccccccacaaaccccccccccccccccaaaaacccccccccccccccccccccccchhhhhhhhhggggoooooffffaacaaacccc
+abccccccccccaaaaacaaccccccccccccccaaaaaccccccccccccccccccccccccchhhhhhhhggggggggggffcaacccccccc
+abccccccccccaaaaaaaaccccccccccccccaaaacccaacccccccccccaccccccccccccccaaaaaggggggggfcccccccccccc
+abccccccccccccaaaaaccccaacccccccccaaaacaaaaccccccccaaaaccccccccccccccaaaacaaagggggcccccccccaccc
+abcccccccccccaaaaacccccaacccccccccaaaaaaaaaccccccccaaaaaaccccccccccccaaaccaaaacccccccccccccaaac
+abcccccccccccaacaaccaaaaaaaacccaaaaaaaaaaaccccccccccaaaaccccccccccccccaccccaaacccccccccccccaaaa
+abccccccccccccccaaccaaaaaaaaccaaaaaaaaaaaccccccccccaaaaacccccccccccccccccccccacccccccccccccaaaa
+abccccccccccccccccccccaaaaacccaaaaaaaaaaaacccccccccaacaacccccccccccccccccccccccccccccccccaaaaaa")
+(mod 1705 95)
+#+END_SRC
+
+#+RESULTS: 2022-day12-input
+: aoc22/day12input
+
+#+NAME: 2022-day12-solution
+#+BEGIN_SRC emacs-lisp :session "day12" :val x=2022-day12-input
+;;; Code:
+(require 'cl-lib)
+(setq case-fold-search nil)
+(defun aoc22/day12-part1 (input)
+  "Parse INPUT, create a network and apply Dijkstra's algorithm.
+To be replaced with actual docstring."
+  (let* ((network (cl-reduce #'concat (split-string input "\n" t)))
+         (columns (string-match-p "\n" input))
+         (lines   (/ (length input) columns))
+         (start   (string-match-p "S" network))
+         (finish  (string-match-p "E" network))
+         (dist    (make-vector (* lines columns) nil))
+         (prev    (make-vector (* lines columns) nil)))
+    (dotimes (idx (* lines columns))
+      (aset dist idx (list ?∞ t)))
+    (aset dist start (list 0 t))
+    (while (cadr (aref dist finish))
+      (let* ((minimum-distance (cl-reduce #'min
+                                          (mapcar #'car
+                                                  (seq-filter (lambda (x) (cadr x)) dist))))
+             (current (cl-position-if (lambda (x)
+                                        (and (= (car x) minimum-distance)
+                                             (cadr x))) dist)))
+        (setf (cadr (aref dist current)) nil)
+        (dolist (direction (list (- current columns)
+                                 (1+ current)
+                                 (+ current columns)
+                                 (1- current)))
+          (if (and (>= direction 0) (< direction (* columns lines)) (cadr (aref dist direction)))
+              (let ((delta (- (aref network direction) (aref network current))))
+                (cond
+                 ((= current start)
+                  (let ((start-delta (- (aref network direction) ?a)))
+                    (if (<= start-delta 1)
+                        (let ((alt (1+ (car (aref dist current)))))
+                          (if (< alt (car (aref dist direction)))
+                              (progn (setf (car (aref dist direction)) alt)
+                                     (aset prev direction current)))))))
+                 ((= direction finish)
+                  (let ((end-delta (- ?z (aref network current))))
+                    (if (<= end-delta 1)
+                        (progn (setf (car (aref  dist finish)) (1+ (car (aref dist current))))
+                               (aset prev finish current)
+                               (setf (cadr (aref dist finish)) nil)))))
+                 ((<= delta 1)
+                  (let ((alt (1+ (car (aref dist current)))))
+                    (if (< alt (car (aref dist direction)))
+                        (progn (setf (car (aref dist direction)) alt)
+                               (aset prev direction current)))))))))))
+    (car (aref dist finish))))
+
+(defun aoc22/day12-part2 (input)
+  "Takes INPUT and solve the puzzle.
+To be replaced with actual docstring."
+  (setq case-fold-search nil)
+  (let ((position 0)
+        (start (string-match-p "S" input))
+        (results ()))
+    (while (setq position (string-match-p "a" input position))
+      (aset input position ?S)
+      (aset input start ?a)
+      (setq start position)
+      (push (aoc22/day12-part1 input) results))
+    (cl-reduce #'min results)))
+
+;;; Helper functions:
+
+;;; Results vector
+
+(vector (aoc22/day12-part1 aoc22/day12test)
+        (aoc22/day12-part1 aoc22/day12input)
+        (aoc22/day12-part2 aoc22/day12test)
+        (aoc22/day12-part2 aoc22/day12input))
+#+END_SRC
+
+#+RESULTS: 2022-day12-solution
+: [29 422 29 414]
