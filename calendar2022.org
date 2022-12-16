@@ -9711,12 +9711,26 @@ To be replaced with actual docstring."
              (right (cadr pair)))
         (if (aoc22/compare left right)
             (push (1+ index) indices))))
-    indices))
+    (cl-reduce #'+ indices)))
 
 (defun aoc22/day13-part2 (input)
-  "Takes INPUT and solve the puzzle.
-To be replaced with actual docstring."
-  (car input))
+  "Takes INPUT add two packets and sort them.
+In the list of sorted packets, find the two indicator packets and
+multiply their indices.  This is the value to be returned.  The
+list of packet pairs needs to be converted to a single list of
+packets, add the two indicator packets, sort, find the indices,
+give the answer."
+  (let ((list-to-sort [[[2]] [[6]]]))
+    (dolist (pair input)
+      (setq list-to-sort (vconcat list-to-sort (vector (car pair)) (vector (cadr pair)))))
+    (sort list-to-sort #'aoc22/compare)
+    (let (positions)
+      (dotimes (idx (length list-to-sort))
+        (if (equal (aref list-to-sort idx) [[2]])
+            (push (1+ idx) positions))
+        (if (equal (aref list-to-sort idx) [[6]])
+            (push (1+ idx) positions)))
+      (cl-reduce #'* positions))))
 
 ;;; Helper functions:
 
@@ -9768,10 +9782,12 @@ The result can be:
       (while (and (< index min-index)
                   (= (setq result (aoc22/compare-nested (aref left index) (aref rite index))) 0))
         (cl-incf index))
-      (if (< index min-index)
-          result
-        (if (= (length left) min-index) 0
-          -1))))
+      (cond
+       ((< index min-index) result)
+       ((= (length left) (length rite)) 0)
+       ((< (length left) (length rite)) 1)
+       ((> (length left) (length rite)) -1)
+       (t (error "This should never happen!")))))
    (t (error (format "Unhandled case left:%s rite:%s" left rite)))))
 
 
@@ -9779,14 +9795,12 @@ The result can be:
 
 (vector (aoc22/day13-part1 aoc22/day13test)
         (aoc22/day13-part1 aoc22/day13input)
-        ;; (aoc22/day13-part2 aoc22/day13test)
-        ;; (aoc22/day13-part2 aoc22/day13input)
-        )
-
+        (aoc22/day13-part2 aoc22/day13test)
+        (aoc22/day13-part2 aoc22/day13input))
 ;;
 
 ; LocalWords:  Unhandled
 #+END_SRC
 
 #+RESULTS: 2022-day13-solution
-: [(6 4 2 1)
+: [13 6623 140 23049]
