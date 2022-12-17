@@ -10272,22 +10272,193 @@ line-pairs list, which is returned"
 ** day 15
 #+NAME: 2022-day15-input
 #+BEGIN_SRC emacs-lisp :session "day15"
-(defconst aoc22/day15test '("TBD"))
+(defconst aoc22/day15test '(((2 18)(-2 15))
+                            ((9 16)(10 16))
+                            ((13 2)(15 3))
+                            ((12 14)(10 16))
+                            ((10 20)(10 16))
+                            ((14 17)(10 16))
+                            ((8 7)(2 10))
+                            ((2 0)(2 10))
+                            ((0 11)(2 10))
+                            ((20 14)(25 17))
+                            ((17 20)(21 22))
+                            ((16 7)(15 3))
+                            ((14 3)(15 3))
+                            ((20 1)(15 3))))
 
-(defconst aoc22/day15input '("TBD"))
+(defconst aoc22/day15input '(((3428425 2345067)(3431988 2379841))
+                             ((928237 25774)(1212315 -161555))
+                             ((2061220 2396791)(2038311 2495160))
+                             ((1830400 2994568)(1910058 3117415))
+                             ((2485733 2625804)(2038311 2495160))
+                             ((1855873 3971916)(1910058 3117415))
+                             ((119582 3929652)(311197 4221202))
+                             ((1069031 3509672)(1910058 3117415))
+                             ((3368023 2213635)(3431988 2379841))
+                             ((3713877 2460862)(3431988 2379841))
+                             ((3593503 2174008)(3507689 2000000))
+                             ((501760 93436)(1212315 -161555))
+                             ((3712703 214999)(3507689 2000000))
+                             ((1594824 2790273)(1910058 3117415))
+                             ((2539549 3190814)(1910058 3117415))
+                             ((3522790 2671548)(3431988 2379841))
+                             ((1001452 1327490)(1212315 -161555))
+                             ((629209 2451628)(-416149 2226089))
+                             ((2636827 1146266)(3507689 2000000))
+                             ((3909 625124)(1212315 -161555))
+                             ((3950231 3688780)(3888160 3226725))
+                             ((3449978 2328058)(3431988 2379841))
+                             ((3974214 2582925)(3888160 3226725))
+                             ((82663 3225533)(311197 4221202))
+                             ((1958305 2292045)(2038311 2495160))
+                             ((3465738 2123353)(3507689 2000000))
+                             ((2940758 3884337)(2746166 4800483))
+                             ((3429173 2275591)(3431988 2379841))
+                             ((1527349 38565)(1212315 -161555))
+                             ((3049925 2498038)(3431988 2379841))
+                             ((1593202 3335178)(1910058 3117415))
+                             ((3175520 3230234)(3888160 3226725))))
 
 #+END_SRC
+
+#+RESULTS: 2022-day15-input
+: aoc22/day15input
 
 #+NAME: 2022-day15-solution
 #+BEGIN_SRC emacs-lisp :session "day15" :val x=2022-day15-input
 ;;; Code:
+(require 'cl-lib)
+(defun aoc22/day15-part1 (sensors y)
+  "Get SENSORS list and compute on row Y the occupied positions.
+The SENSORS list consists of pairs of sensor coordinates and
+beacon coordinates.  Each sensor is coupled with one beacon, and
+no other beacon exists in the manhatan area that the sensor
+covers."
+  (let ((occupied ())
+        (beacons (seq-uniq (mapcar #'car (cl-remove-if-not
+                                          (lambda (elt) (= (nth 1 elt) y))
+                                          (mapcar #'cadr sensors))))))
+    (dolist (datum sensors)
+      (let* ((sensor (nth 0 datum))
+             (beacon (nth 1 datum))
+             (distance (aoc22/manhattan sensor beacon)))
+        (let* ((x (nth 0 sensor))
+               (dist (aoc22/manhattan sensor (list x y))))
+          (if (>= distance dist)
+              (let* ((offset (- distance dist))
+                     (low-x (- x offset))
+                     (hi-x (+ x offset)))
+                (push (list low-x hi-x) occupied))))))
+    (setq occupied (mapcar (lambda (pair) (number-sequence (nth 0 pair) (nth 1 pair)))
+                           (aoc22/consolidate-spaces occupied)))
+    (length (cl-remove-if (lambda (x) (member x beacons))
+                          (cl-reduce #'append occupied)))))
 
-(defun aoc22/day15-part1 (input)
+(defun aoc22/day15-part2 (sensors ymax)
+  "Takes SENSORS and YMAX and find available place for beacon.
+The place is swept from 0 up to YMAX, and then the y and x is
+reported that give available place for the beacon."
+  (cl-block FOUND
+    (dotimes (y ymax)
+      (let ((pairs (aoc22/find-occupied sensors y)))
+        (if (= (length pairs) 2)
+            (cl-return-from FOUND (+ (* 4000000 (1+ (nth 1 (nth 0 pairs)))) y)))))))
+
+;;; Helper functions:
+(defun aoc22/find-occupied (sensors y)
+  "Get SENSORS and a Y coordinate, and compute the occupied intervals."
+  (let ((occupied ())
+        (beacons (seq-uniq (mapcar #'car (cl-remove-if-not
+                                          (lambda (elt) (= (nth 1 elt) y))
+                                          (mapcar #'cadr sensors))))))
+    (dolist (datum sensors)
+      (let* ((sensor (nth 0 datum))
+             (beacon (nth 1 datum))
+             (distance (aoc22/manhattan sensor beacon)))
+        (let* ((x (nth 0 sensor))
+               (dist (aoc22/manhattan sensor (list x y))))
+          (if (>= distance dist)
+              (let* ((offset (- distance dist))
+                     (low-x (- x offset))
+                     (hi-x (+ x offset)))
+                (if (< low-x 0)
+                    (if (> hi-x 0)
+                        (setq low-x 0)
+                      (setq low-x 0)
+                      (setq hi-x 0)))
+                (if (> hi-x 4000000)
+                    (if (< low-x 4000000)
+                        (setq hi-x 4000000)
+                      (setq hi-x 4000000)
+                      (setq low-x 4000000)))
+                (push (list low-x hi-x) occupied))))))
+    (setq occupied (aoc22/consolidate-spaces occupied))))
+
+(defun aoc22/manhattan (a b)
+  "Get points A and B and compute the Manhattan distance."
+  (+ (abs (- (car a) (car b))) (abs (- (cadr a) (cadr b)))))
+
+(defun aoc22/consolidate-spaces (pairs)
+  "The PAIRS are checked and overlapping intervals are consolidated.
+At the end, the function returns only ranges with no overlap."
+  (let ((result ())
+        (candidate ()))
+    (setq pairs (sort pairs (lambda (a b) (< (car a) (car b)))))
+    (dolist (pair pairs)
+      (cond
+       ;; start with empty candidate
+       ((eq candidate ())
+        (setq candidate pair))
+       ;; candidate doesn't reach the pair
+       ((< (nth 1 candidate) (nth 0 pair))
+        (if (= (- (nth 0 pair) (nth 1 candidate)) 1)
+            (setf (nth 1 candidate) (nth 1 pair))
+          (push candidate result)
+          (setq candidate pair)))
+       ;; special case upper candidate is the same as lower pair
+       ((= (nth 1 candidate) (nth 0 pair))
+        (setf (nth 1 candidate) (nth 1 pair)))
+       ;; candidate upper is higher than pair lower
+       ((> (nth 1 candidate) (nth 0 pair))
+        ;; candidate covers whole pair
+        (if (>= (nth 1 candidate) (nth 1 pair))
+            "nothing to do"
+          ;; extend candidate
+          (setf (nth 1 candidate) (nth 1 pair))))))
+    (push candidate result)
+    (reverse result)))
+
+;;; Results vector
+(+ (* 4000000 2870615) 2818989)
+(vector (aoc22/day15-part1 aoc22/day15test 10)
+        (aoc22/day15-part1 aoc22/day15input 2000000)
+        (aoc22/day15-part2 aoc22/day15test 20)
+        (aoc22/day15-part2 aoc22/day15input 4000000)
+        )
+#+END_SRC
+
+#+RESULTS: 2022-day15-solution
+: [26 4737443 56000011 11482462818989]
+** day 16
+#+NAME: 2022-day16-input
+#+BEGIN_SRC emacs-lisp :session "day16"
+(defconst aoc22/day16test '("TBD"))
+
+(defconst aoc22/day16input '("TBD"))
+
+#+END_SRC
+
+#+NAME: 2022-day16-solution
+#+BEGIN_SRC emacs-lisp :session "day16" :val x=2022-day16-input
+;;; Code:
+
+(defun aoc22/day16-part1 (input)
   "Takes INPUT and solve the puzzle.
 To be replaced with actual docstring."
   (car input))
 
-(defun aoc22/day15-part2 (input)
+(defun aoc22/day16-part2 (input)
   "Takes INPUT and solve the puzzle.
 To be replaced with actual docstring."
   (car input))
@@ -10296,8 +10467,8 @@ To be replaced with actual docstring."
 
 ;;; Results vector
 
-(vector (aoc22/day15-part1 aoc22/day15test)
-        (aoc22/day15-part1 aoc22/day15input)
-        (aoc22/day15-part2 aoc22/day15test)
-        (aoc22/day15-part2 aoc22/day15input))
+(vector (aoc22/day16-part1 aoc22/day16test)
+        (aoc22/day16-part1 aoc22/day16input)
+        (aoc22/day16-part2 aoc22/day16test)
+        (aoc22/day16-part2 aoc22/day16input))
 #+END_SRC
