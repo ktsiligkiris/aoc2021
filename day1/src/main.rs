@@ -1,20 +1,20 @@
+use itertools::Itertools;
+
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    let mut max = 0;
-    for group in include_str!("input.txt")
-        .replace("\r\n", "\n")
-        .split("\n\n")
-    {
-        let mut sum = 0;
-        for line in group.lines() {
-            let value = line.parse::<u64>()?;
-            sum += value;
-        }
-        if sum > max {
-            max = sum;
-        }
-    }
-    println!("The burdenedst elf is carrying {max} calories");
+    let max = include_str!("input.txt")
+        .lines()
+        .map(|v| v.parse::<u64>().ok())
+        .batching(|it| {
+            let mut sum = None;
+            while let Some(Some(v)) = it.next() {
+                sum = Some(sum.unwrap_or(0) + v);
+            }
+            sum
+        })
+        .max();
+    println!("{max:?}");
+
     Ok(())
 }
