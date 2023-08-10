@@ -1,6 +1,6 @@
 mod item {
     #[repr(transparent)]
-    #[derive(Clone, Copy, PartialEq, Eq)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash)]
     pub(crate) struct Item(u8);
 
     impl TryFrom<u8> for Item {
@@ -35,35 +35,28 @@ mod item {
 }
 
 use item::Item;
+use itertools::Itertools;
+use std::collections::HashSet;
 
 fn main() -> color_eyre::Result<()> {
-    let mut total_score = 0;
-
-    for line in include_str!("input.txt").lines() {
-        let (first, second) = line.split_at(line.len() / 2);
-
-        let first_items = first
-            .bytes()
+    let rucksacks = include_str!("input.txt").lines().map(|line| {
+        line.bytes()
             .map(Item::try_from)
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Result<HashSet<_>, _>>()
+    });
 
-        let dupe_score = second
-            .bytes()
-            .map(Item::try_from)
-            .find_map(|item| {
-                item.ok().and_then(|item| {
-                    first_items
-                        .iter()
-                        .copied()
-                        .find(|&first_item| first_item == item)
-                })
+    let sum = itertools::process_results(rucksacks, |rs| {
+        rs.tuples()
+            .map(|(a, b, c)| {
+                a.iter()
+                    .copied()
+                    .find(|i| b.contains(i) && c.contains(i))
+                    .map(|i| dbg!(i.score()))
+                    .unwrap_or_default()
             })
-            .expect("there should be exactly one duplicate")
-            .score();
-        dbg!(dupe_score);
-        total_score += dupe_score;
-    }
+            .sum::<usize>()
+    })?;
+    dbg!(sum);
 
-    dbg!(total_score);
     Ok(())
 }
