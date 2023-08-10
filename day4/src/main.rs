@@ -8,6 +8,12 @@ trait InclusiveRangeExt {
     fn contains_or_is_contained(&self, other:&Self) -> bool {
         self.contains_range(other) || other.contains_range(self)
     }
+
+    fn overlaps(&self, other: &Self) -> bool;
+
+    fn overlaps_or_is_overlapped(&self, other: &Self) -> bool {
+        self.overlaps(other) || other.overlaps(self)
+    }
 }
 
 impl<T> InclusiveRangeExt for RangeInclusive<T>
@@ -16,6 +22,10 @@ where
 {
     fn contains_range(&self, other: &Self) -> bool {
         self.contains(other.start()) && self.contains(other.end())
+    }
+
+    fn overlaps(&self, other: &Self) -> bool {
+        self.contains(other.start()) || self.contains(other.end())
     }
 }
 
@@ -35,7 +45,7 @@ fn main() {
                 .collect_tuple::<(_, _)>()
                 .expect("each line must have a pair of ranges")
         })
-        .filter(|(a, b)| a.contains_or_is_contained(b))
+        .filter(|(a, b)| a.overlaps_or_is_overlapped(b))
         .count();
     dbg!(redundant);
 }
